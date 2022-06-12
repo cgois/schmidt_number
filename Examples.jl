@@ -10,8 +10,6 @@ rho = [1 0 0 -1; 0 1 1/2 0; 0 1/2 1 0; -1 0 0 1]
 @time maximally_mixed_distance(rho, 2, 1, 2, ppt=false)
 
 """Isotropic states are entangled for visibility above 1 / (d + 1)"""
-
-"""Isotropic state."""
 function isotropic(d::Integer=2, vis::Float64=1.0)
     vis * ghz(d, parties=2, ket=false) + (1 - vis) * I(d^2) / (d^2)
 end
