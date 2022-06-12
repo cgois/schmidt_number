@@ -23,4 +23,4 @@ Example for Schmidt number > 2)
 ======================================================#
 # This case returns 1 (feasibility), so it does not certify sn > 2.
 # to that, we possibly need to increase `n`, but it gets too slow.
-@time maximally_mixed_distance(ghz(4), 4, 2, 2, ppt=true)
+# @time maximally_mixed_distance(ghz(4), 4, 2, 2, ppt=true)

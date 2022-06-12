@@ -1,5 +1,6 @@
-using TensorOperations
+using TensorOperations, JuMP, ComplexOptInterface
 
+"""Dense identity matrix."""
 eye(d) = Matrix{ComplexF64}(I(d))
 
 """GHZ state (normalized)."""
@@ -18,8 +19,23 @@ function ghz(d::Integer=2; parties::Integer=2, ket::Bool=false)
     ghz * ghz'
 end
 
-"""Partial trace and partial transpose operations,
-taken from https://github.com/iitis/QuantumInformation.jl"""
+"""
+Enforce PSD constraint on the input matrix.
+Uses dummy vars. to enforce PPT (not possible directly in ComplexOptInterface?).
+"""
+function ispsd(problem::Model, A::AbstractMatrix)
+    @assert size(A,1) == size(A,2) "Matrix must be square."
+    @assert length(size(A)) == 2 "Matrix must be bidimensional."
+
+    dim = size(A, 1)
+    PSD = @variable(problem, [1:dim, 1:dim] in ComplexOptInterface.HermitianPSDCone())
+    @constraint(problem, A .== PSD)
+end
+
+"""
+Partial trace and partial transpose operations were
+taken from https://github.com/iitis/QuantumInformation.jl
+"""
 
 """
 - `ρ`: quantum state.
@@ -95,4 +111,3 @@ end
 - `sys`: transposed subsystem.
 """
 ptranspose(ρ::AbstractMatrix, idims::Vector{Int}, sys::Int) = ptranspose(ρ, idims, [sys])
-

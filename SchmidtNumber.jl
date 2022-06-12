@@ -22,11 +22,6 @@ function maximally_mixed_distance(state, local_dim, sn=1, n::Integer=3; ppt::Boo
     # Optimization variables
     @variable(problem, 0 <= vis <= 1)
     Q = @variable(problem, [1:Qdim, 1:Qdim] in ComplexOptInterface.HermitianPSDCone())
-    if ppt
-        # Dummy vars. to enforce PPT (not possible directly in ComplexOptInterface?).
-        fulldim = prod(dims)
-        PSD = @variable(problem, [1:fulldim, 1:fulldim] in ComplexOptInterface.HermitianPSDCone())
-    end
 
     # Constraints
     noisy_state = vis * state + (1 - vis) * noise
@@ -35,7 +30,7 @@ function maximally_mixed_distance(state, local_dim, sn=1, n::Integer=3; ppt::Boo
     @constraint(problem, noisy_state .== ptrace(reduced, [local_dim, sn, sn, local_dim], [2, 3]))
     if ppt
         ssys = Int.(1:ceil(n / 2) + 1)
-        @constraint(problem, PSD .== ptranspose(lifted, dims, ssys))
+        ispsd(problem, ptranspose(lifted, dims, ssys))
     end
 
     # Solution
