@@ -8,4 +8,5 @@ Check `Examples.jl` for... examples.
 ## Files
 - `SchmidtNumber.jl` -- Implements symmetric extensions SDP with bosonic symmetries and PPT criterion.
 - `BosonicSymmetry.jl` -- Functions to generate the projector onto/out from the symmetric subspace.
+- `Utils.jl` -- Partial trace and partial transposition operations (from [QuantumInformation.jl](https://github.com/iitis/QuantumInformation.jl))
 - `Examples.jl` -- Provides simple examples for isotropic and extendible states.
