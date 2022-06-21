@@ -9,7 +9,7 @@ function symmetric_projection(dim::Int, copies::Int)
         P += permutation_operator(dim, perm)
     end
     # Inverse of projector onto the symmetric subspace.
-    orthonormal_range(P / length(perm_list))
+    sparse(orthonormal_range(P / length(perm_list)))
 end
 
 """Unitary to permute subsystems of dimension `dim` w.r.t. vector `perm`."""
