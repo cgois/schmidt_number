@@ -8,12 +8,12 @@ An objective value of 1 means feasibility (unconclusive), and < 1 means entangle
 function maximally_mixed_distance(state, local_dim, sn=1, n::Integer=3; ppt::Bool=true)
     # Constants
     dim = size(state, 1)
-    noise = eye(dim) / dim^2
+    noise = eye(dim) / dim
     aux_dim = local_dim * sn # Dimension with auxiliary spaces A'B'
     dims = repeat([aux_dim], n + 1) # AA' dim. + `n` copies of BB'.
     P = kron(eye(aux_dim), symmetric_projection(aux_dim, n)) # Bosonic subspace projector.
     Qdim = aux_dim * binomial(n + aux_dim - 1, aux_dim - 1)  # Dim. extension w/ bosonic symmetries.
-    entangling = kron(eye(local_dim), sn .* ghz(sn), eye(local_dim)) # Entangling between A' and B'.
+    entangling = kron(eye(local_dim), sqrt(sn) .* ghz(sn, ket=true), eye(local_dim)) # Entangling between A' and B'.
 
     problem = Model(SCS.Optimizer)
     COI = ComplexOptInterface # Adds complex number support do JuMP.
@@ -25,9 +25,10 @@ function maximally_mixed_distance(state, local_dim, sn=1, n::Integer=3; ppt::Boo
 
     # Constraints
     noisy_state = vis * state + (1 - vis) * noise
-    @expression(problem, lifted, P * Q * P')
-    @expression(problem, reduced, ptrace(lifted, dims, collect(3:n+1)) * entangling)
-    @constraint(problem, noisy_state .== ptrace(reduced, [local_dim, sn, sn, local_dim], [2, 3]))
+    @expression(problem, lifted, (P * Q) * P')
+    @expression(problem, reduced, ptrace(lifted, dims, collect(3:n+1)))
+    @constraint(problem, noisy_state .== entangling' * reduced * entangling)
+    @constraint(problem, tr(reduced) == sn)
     if ppt
         ssys = Int.(1:ceil(n / 2) + 1)
         ispsd(problem, ptranspose(lifted, dims, ssys))
@@ -35,7 +36,6 @@ function maximally_mixed_distance(state, local_dim, sn=1, n::Integer=3; ppt::Boo
 
     # Solution
     @objective(problem, Max, vis)
-    @show problem
     optimize!(problem)
     @show solution_summary(problem, verbose=true)
     problem, Q
