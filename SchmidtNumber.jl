@@ -1,11 +1,15 @@
-using JuMP, ComplexOptInterface, SCS
+using JuMP, ComplexOptInterface
 
 include("BosonicSymmetry.jl")
 include("Utils.jl")
 
 """Maximum visibility (w.r.t. random noise) s.t. the DPS criterion is certified.
 An objective value of 1 means feasibility (unconclusive), and < 1 means entanglement."""
-function maximally_mixed_distance(state, local_dim, sn=1, n::Integer=3; ppt::Bool=true)
+function maximally_mixed_distance(state, local_dim, sn=1, n::Integer=3;
+                                  ppt::Bool=true,
+                                  solver=SCS.Optimizer,
+                                  params=nothing,
+                                  precision="default")
     # Constants
     dim = size(state, 1)
     noise = eye(dim) / dim
@@ -15,10 +19,7 @@ function maximally_mixed_distance(state, local_dim, sn=1, n::Integer=3; ppt::Boo
     Qdim = aux_dim * binomial(n + aux_dim - 1, aux_dim - 1)  # Dim. extension w/ bosonic symmetries.
     entangling = kron(eye(local_dim), sqrt(sn) .* ghz(sn, ket=true), eye(local_dim)) # Entangling between A' and B'.
 
-    problem = Model(SCS.Optimizer)
-    COI = ComplexOptInterface # Adds complex number support do JuMP.
-    COI.add_all_bridges(problem)
-
+    problem = setsolver(solver, params=params, precision=precision)
     # Optimization variables
     @variable(problem, 0 <= vis <= 1)
     Q = @variable(problem, [1:Qdim, 1:Qdim] in ComplexOptInterface.HermitianPSDCone())

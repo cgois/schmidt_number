@@ -1,4 +1,31 @@
-using TensorOperations, JuMP, ComplexOptInterface
+using TensorOperations, JuMP, ComplexOptInterface, SCS, Mosek, MosekTools
+
+"""Set solver parameters for SCS or Mosek's conic optimizer."""
+function setsolver(solver; precision::String="default",
+                   params::Union{Tuple{Pair},Nothing}=nothing)
+    # If parameters are explicitly given, they have priority, but if not...
+    if isnothing(params)
+        if precision == "low"
+            if solver == Mosek.Optimizer
+                # Defaults are all 1E-8
+                params = ("MSK_DPAR_INTPNT_CO_TOL_DFEAS" => 1E-5,
+                        "MSK_DPAR_INTPNT_CO_TOL_PFEAS" => 1E-5,
+                        "MSK_DPAR_INTPNT_CO_TOL_REL_GAP" => 1E-5)
+            elseif solver == SCS.Optimizer
+                # Defaults are both 1E-4
+                params = ("eps_abs" => 1E-3, "eps_rel" => 1E-3)
+            end
+            problem = Model(optimizer_with_attributes(solver, params...))
+        else # Default precision
+            problem = Model(solver)
+        end
+    else
+        problem = Model(optimizer_with_attributes(solver, params...))
+    end
+    COI = ComplexOptInterface # Adds complex number support do JuMP.
+    COI.add_all_bridges(problem)
+    problem
+end
 
 """Dense identity matrix."""
 eye(d) = Matrix{ComplexF64}(I(d))
@@ -17,6 +44,11 @@ function ghz(d::Integer=2; parties::Integer=2, ket::Bool=false)
         return ghz
     end
     ghz * ghz'
+end
+
+"""Isotropic states are entangled for visibility above 1 / (d + 1)"""
+function isotropic(d::Integer=2, vis::Float64=1.0)
+    vis * ghz(d, parties=2, ket=false) + (1 - vis) * I(d^2) / (d^2)
 end
 
 """
